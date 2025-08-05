@@ -1,8 +1,0 @@
-[build]
-cmd = "npm install --no-package-lock && npm run build"
-
-[deploy]
-startCommand = "npm start"
-
-[env]
-NODE_ENV = "production"
