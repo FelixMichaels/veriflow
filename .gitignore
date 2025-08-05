@@ -45,4 +45,4 @@ coverage/
 
 # Local data storage
 server/data/
-*.json.backup
+*.json.backupclient/
