@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Enhanced date and time input styling */
+        input[type="date"], input[type="time"] {
+            position: relative;
+            background: #ffffff;
+            color: #374151;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        /* Webkit date input styling - makes entire input clickable */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+            opacity: 0;
+        }
+
+        /* Firefox date input styling */
+        input[type="date"]::-moz-focus-inner,
+        input[type="time"]::-moz-focus-inner {
+            border: 0;
+        }
+
+        /* Hover effects for better UX */
+        input[type="date"]:hover, input[type="time"]:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Admin navigation button styles */
+        .admin-nav-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        
+        .admin-nav-btn.active {
+            background-color: rgb(219, 234, 254) !important;
+            color: rgb(29, 78, 216) !important;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[9999] space-y-2"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div id="confirmationContent">
+                <h3 id="confirmationTitle" class="text-lg font-semibold text-gray-900 mb-2"></h3>
+                <p id="confirmationMessage" class="text-gray-600 mb-4"></p>
+                <div class="flex space-x-3">
+                    <button 
+                        id="confirmationCancel"
+                        onclick="hideConfirmationModal()"
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        id="confirmationConfirm"
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div id="sessionDetailsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-medium text-gray-900">Verification Session Details</h3>
+                <button onclick="closeSessionDetails()" class="text-gray-400 hover:text-gray-600">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="sessionDetailsContent">
+                <!-- Session details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Settings Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-4 mx-auto p-0 border max-w-6xl shadow-lg rounded-lg bg-white min-h-[90vh]">
+            <div class="flex h-full">
+                <!-- Sidebar Navigation -->
+                <div class="w-64 bg-gray-50 border-r border-gray-200 rounded-l-lg">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                            <span>⚙️</span>
+                            <span>Admin Settings</span>
+                        </h2>
+                    </div>
+                    <nav class="p-4 space-y-2">
+                        <button onclick="showAdminSection('users')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>👥</span>
+                            <span>User & Role Management</span>
+                        </button>
+                        <button onclick="showAdminSection('system')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>⚙️</span>
+                            <span>System Configuration</span>
+                        </button>
+                        <button onclick="showAdminSection('security')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>🔒</span>
+                            <span>Security & Compliance</span>
+                        </button>
+                        <button onclick="showAdminSection('integrations')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>🔗</span>
+                            <span>Integration Config</span>
+                        </button>
+                        <button onclick="showAdminSection('verification')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>📋</span>
+                            <span>Verification Settings</span>
+                        </button>
+                        <button onclick="showAdminSection('branding')" class="admin-nav-btn w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors flex items-center space-x-2">
+                            <span>🎨</span>
+                            <span>Branding & Custom</span>
+                        </button>
+                    </nav>
+                    <div class="mt-8 p-4 border-t border-gray-200">
+                        <button 
+                            onclick="closeAdminSettings()"
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+                        >
+                            Close Admin
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1 p-6 overflow-y-auto">
+                    <div id="adminContent">
+                        <!-- Content will be loaded here -->
+                        <div class="text-center py-12">
+                            <div class="text-6xl mb-4">⚙️</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Admin Settings</h3>
+                            <p class="text-gray-600">Select a category from the sidebar to manage system settings.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Auto-detect API base URL for production
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000/api'
+            : 'https://your-veriflow-api.railway.app/api';
+
+        // Simple state management
+        let state = {
+            user: null,
+            sessions: [],
+            loading: false,
+            filters: {
+                search: '',
+                status: '',
+                assignedToId: '',
+                meetingPlatform: '',
+                dateFrom: '',
+                dateTo: ''
+            },
+            availableUsers: []
+        };
+
+        // API helper
+        const api = {
+            async request(url, options = {}) {
+                const token = localStorage.getItem('auth_token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` }),
+                    ...options.headers
+                };
+
+                const response = await fetch(`${API_BASE}${url}`, {
+                    ...options,
+                    headers
+                });
+
+                return response.json();
+            },
+
+            async login(email, name) {
+                return this.request('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, name })
+                });
+            },
+
+            async getVerifications() {
+                return this.request('/verification');
+            }
+        };
+
+        // Components
+        function LoginForm() {
+            return `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+                        <h1 class="text-2xl font-bold text-center mb-6 text-gray-900">
+                            VeriFlow
+                        </h1>
+                        <form id="loginForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                            </div>
+                            <button 
+                                type="submit"
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                                id="loginBtn"
+                            >
+                                Sign In
+                            </button>
+                        </form>
+                        <p class="text-xs text-gray-500 text-center mt-4">
+                            Development mode - use any email to login
+                        </p>
+                        <div id="loginError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p class="text-red-800 text-sm"></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function Dashboard() {
+            const sessionCount = state.sessions.length;
+            const pendingCount = state.sessions.filter(s => s.status === 'pending').length;
+            
+            return `
+                <div class="min-h-screen">
+                    <!-- Navigation -->
+                    <nav class="bg-blue-800 shadow-lg">
+                        <div class="max-w-7xl mx-auto px-4">
+                            <div class="flex justify-between h-16">
+                                <div class="flex items-center">
+                                    <h1 class="text-white text-xl font-bold">VeriFlow</h1>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-blue-100 text-sm">
+                                        ${state.user.name} (${state.user.role})
+                                    </span>
+                                    ${state.user.role === 'admin' ? `
+                                        <button 
+                                            onclick="showAdminSettings()"
+                                            class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-md text-sm transition-colors flex items-center space-x-1"
+                                            title="Admin Settings"
+                                        >
+                                            <span>⚙️</span>
+                                            <span>Admin</span>
+                                        </button>
+                                    ` : ''}
+                                    <button 
+                                        onclick="logout()"
+                                        class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm transition-colors"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Main Content -->
+                    <div class="max-w-7xl mx-auto py-6 px-4">
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                            <p class="text-gray-600">Welcome to the Identity Verification System</p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mr-3">
+                                        <span class="text-white text-sm font-bold">#</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Total Verifications</p>
+                                        <p class="text-lg font-medium text-gray-900">${sessionCount}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center mr-3">
+                                        <span class="text-white text-sm font-bold">⏳</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Pending</p>
+                                        <p class="text-lg font-medium text-gray-900">${pendingCount}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center mr-3">
+                                        <span class="text-white text-sm font-bold">✓</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Completed Today</p>
+                                        <p class="text-lg font-medium text-gray-900">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center mr-3">
+                                        <span class="text-white text-sm font-bold">!</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Open Tickets</p>
+                                        <p class="text-lg font-medium text-gray-900">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white rounded-lg shadow p-6 mb-8">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button 
+                                    onclick="showCreateModal()"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
+                                >
+                                    New Verification Session
+                                </button>
+                                <button 
+                                    onclick="loadSessions()"
+                                    class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md transition-colors"
+                                >
+                                    Refresh Sessions  
+                                </button>
+                                <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors">
+                                    View Tickets
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search and Filters -->
+                        <div class="bg-white rounded-lg shadow p-6 mb-8">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4 lg:mb-0">🔍 Search & Filter Sessions</h3>
+                                <button 
+                                    onclick="clearAllFilters()"
+                                    id="clearFiltersBtn"
+                                    class="text-sm text-gray-500 hover:text-gray-700 transition-colors hidden"
+                                >
+                                    🗑️ Clear All Filters
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                <!-- Search Bar -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                                    <div class="flex">
+                                        <input 
+                                            type="text" 
+                                            id="searchInput"
+                                            placeholder="Search by name, email, ticket title..."
+                                            class="flex-1 border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            onkeydown="handleSearchKeydown(event)"
+                                        />
+                                        <button 
+                                            onclick="performSearch()"
+                                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-md text-sm font-medium transition-colors border border-blue-600 hover:border-blue-700"
+                                            title="Search"
+                                        >
+                                            🔍
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Status Filter -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                    <select 
+                                        id="statusFilter"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="onFilterChange()"
+                                    >
+                                        <option value="">All Statuses</option>
+                                        <option value="pending">⏳ Pending</option>
+                                        <option value="in_progress">🔄 In Progress</option>
+                                        <option value="completed">✅ Completed</option>
+                                        <option value="rejected">❌ Rejected</option>
+                                        <option value="escalated">⚠️ Escalated</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Assigned User Filter -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+                                    <select 
+                                        id="assignedFilter"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="onFilterChange()"
+                                    >
+                                        <option value="">All Users</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Platform Filter -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Meeting Platform</label>
+                                    <select 
+                                        id="platformFilter"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="onFilterChange()"
+                                    >
+                                        <option value="">All Platforms</option>
+                                        <option value="zoom">🔵 Zoom</option>
+                                        <option value="meet">🟢 Google Meet</option>
+                                        <option value="teams">🟣 Microsoft Teams</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Date Range Filters -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                                    <input 
+                                        type="date" 
+                                        id="dateFromFilter"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-gray-400 transition-colors"
+                                        onchange="onFilterChange()"
+                                        style="color-scheme: light; min-height: 38px;"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                                    <input 
+                                        type="date" 
+                                        id="dateToFilter"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-gray-400 transition-colors"
+                                        onchange="onFilterChange()"
+                                        style="color-scheme: light; min-height: 38px;"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <!-- Active Filters -->
+                            <div id="activeFilters" class="mt-4 hidden">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
+                                <div id="filterTags" class="flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Sessions -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Sessions</h3>
+                            <div id="sessionsList">
+                                ${state.sessions.length === 0 ? 
+                                    '<p class="text-gray-500">No sessions found. <button onclick="loadSessions()" class="text-blue-600 hover:text-blue-800">Load sessions</button></p>' :
+                                    state.sessions.map(session => `
+                                        <div class="border border-gray-200 rounded-md p-4 mb-3 hover:border-blue-300 cursor-pointer transition-colors" onclick="openSessionDetails('${session.id}')">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">${session.employeeName}</p>
+                                                    <p class="text-xs text-gray-500">${session.ticket.title}</p>
+                                                    <p class="text-xs text-gray-400">${session.employeeEmail}</p>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}">
+                                                        ${session.status}
+                                                    </span>
+                                                    <p class="text-xs text-gray-400 mt-1">Click to manage</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Session Modal -->
+                <div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Verification Session</h3>
+                        <form id="createForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Employee Name</label>
+                                <input type="text" id="employeeName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Employee Email</label>
+                                <input type="email" id="employeeEmail" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Ticket Title</label>
+                                <input type="text" id="ticketTitle" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea id="ticketDescription" required rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" onclick="hideCreateModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">Cancel</button>
+                                <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">Create Session</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event handlers
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const btn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('loginError');
+            
+            btn.textContent = 'Signing in...';
+            btn.disabled = true;
+            errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await api.login(email, email.split('@')[0]);
+                if (response.success) {
+                    state.user = response.data.user;
+                    localStorage.setItem('auth_token', response.data.token);
+                    await loadSessions();
+                    render();
+                } else {
+                    throw new Error(response.error?.message || 'Login failed');
+                }
+            } catch (error) {
+                errorDiv.querySelector('p').textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.textContent = 'Sign In';
+                btn.disabled = false;
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                // Build query parameters from current filters
+                const queryParams = new URLSearchParams();
+                Object.entries(state.filters).forEach(([key, value]) => {
+                    if (value) {
+                        queryParams.append(key, value);
+                    }
+                });
+
+                const url = `/verification${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+                const response = await api.request(url);
+                
+                if (response.success) {
+                    state.sessions = response.data;
+                    render();
+                    updateActiveFiltersDisplay();
+                } else {
+                    showToast('Failed to load sessions', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                showToast('Failed to load sessions', 'error');
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                // Load users from admin settings (localStorage) first
+                loadAdminSettings();
+                
+                // Filter only active users for the dropdown
+                const activeUsers = adminSettings.users.filter(user => user.status === 'active');
+                state.availableUsers = activeUsers;
+                populateUserFilter();
+                
+                // Still try to sync with backend as fallback/backup
+                try {
+                    const response = await api.request('/verification/users');
+                    if (response.success && response.data.length > 0) {
+                        // Backend data exists, merge with admin settings but prioritize admin settings
+                        console.log('Backend users available as fallback');
+                    }
+                } catch (error) {
+                    console.log('Using admin settings users (backend not available)');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                // Fallback to empty array
+                state.availableUsers = [];
+                populateUserFilter();
+            }
+        }
+
+        function populateUserFilter() {
+            const assignedFilter = document.getElementById('assignedFilter');
+            if (assignedFilter) {
+                // Clear existing options except "All Users"
+                assignedFilter.innerHTML = '<option value="">All Users</option>';
+                
+                // Add user options
+                state.availableUsers.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name} (${user.role})`;
+                    if (state.filters.assignedToId === user.id) {
+                        option.selected = true;
+                    }
+                    assignedFilter.appendChild(option);
+                });
+            }
+        }
+
+        function logout() {
+            state.user = null;
+            state.sessions = [];
+            localStorage.removeItem('auth_token');
+            render();
+        }
+
+        // Admin Settings Functions
+        function showAdminSettings() {
+            loadAdminSettings(); // Load saved settings
+            const adminModal = document.getElementById('adminModal');
+            adminModal.classList.remove('hidden');
+            
+            // Add click-outside-to-close functionality
+            setTimeout(() => {
+                adminModal.addEventListener('click', function(event) {
+                    // Close if clicking on the backdrop (not the modal content)
+                    if (event.target === adminModal) {
+                        closeAdminSettings();
+                    }
+                });
+            }, 100); // Small delay to prevent immediate closing
+            
+            // Load initial admin section
+            showAdminSection('users'); // Default to users section
+        }
+
+        function closeAdminSettings() {
+            const adminModal = document.getElementById('adminModal');
+            adminModal.classList.add('hidden');
+            
+            // Remove the event listener when closing
+            adminModal.removeEventListener('click', arguments.callee);
+        }
+
+        function showAdminSection(section) {
+            // Update navigation active state
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Highlight active button
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // Load section content
+            const content = document.getElementById('adminContent');
+            content.innerHTML = getAdminSectionContent(section);
+            
+            // Special handling for users section
+            if (section === 'users') {
+                refreshUsersTable();
+            }
+        }
+
+        function getAdminSectionContent(section) {
+            switch (section) {
+                case 'users':
+                    return getUserManagementContent();
+                case 'system':
+                    return getSystemConfigContent();
+                case 'security':
+                    return getSecurityComplianceContent();
+                case 'integrations':
+                    return getIntegrationsContent();
+                case 'verification':
+                    return getVerificationSettingsContent();
+                case 'branding':
+                    return getBrandingContent();
+                default:
+                    return '<div class="text-center py-12"><h3>Select a category</h3></div>';
+            }
+        }
+
+        function getUserManagementContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">👥 User & Role Management</h3>
+                        <p class="text-gray-600">Manage verification operators, roles, and permissions.</p>
+                    </div>
+
+                    <!-- Add New User -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Add New User</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter full name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email address">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="operator">Operator</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="temporary">Temporary Access</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button onclick="addUser()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Current Users -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Current Users</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Users will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getSystemConfigContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">⚙️ System Configuration</h3>
+                        <p class="text-gray-600">Configure default settings, meeting preferences, and data retention policies.</p>
+                    </div>
+
+                    <!-- Default Settings -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Default Meeting Settings</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Default Meeting Duration (minutes)</label>
+                                <input type="number" value="${adminSettings.system.meetingDuration}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Reminder Time Before Meeting (minutes)</label>
+                                <input type="number" value="${adminSettings.system.reminderTime}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Auto-Escalation Time (hours)</label>
+                                <input type="number" value="${adminSettings.system.escalationTime}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+                                <input type="number" value="${adminSettings.system.sessionTimeout}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Required Fields -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Required Verification Fields</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.system.requiredFields.photoIdPresented ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Photo ID Presentation</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.system.requiredFields.nameMatches ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Name Verification</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.system.requiredFields.faceMatches ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Face Match Verification</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.system.requiredFields.documentAuthentic ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Document Authenticity Check</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.system.requiredFields.notesRecorded ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Session Notes</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Retention -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Data Retention Policy</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Verification Records Retention (months)</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="12" ${adminSettings.system.dataRetention.verificationRecords === 12 ? 'selected' : ''}>12 months</option>
+                                    <option value="24" ${adminSettings.system.dataRetention.verificationRecords === 24 ? 'selected' : ''}>24 months</option>
+                                    <option value="36" ${adminSettings.system.dataRetention.verificationRecords === 36 ? 'selected' : ''}>36 months</option>
+                                    <option value="60" ${adminSettings.system.dataRetention.verificationRecords === 60 ? 'selected' : ''}>5 years</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Audit Log Retention (months)</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="12" ${adminSettings.system.dataRetention.auditLogs === 12 ? 'selected' : ''}>12 months</option>
+                                    <option value="24" ${adminSettings.system.dataRetention.auditLogs === 24 ? 'selected' : ''}>24 months</option>
+                                    <option value="36" ${adminSettings.system.dataRetention.auditLogs === 36 ? 'selected' : ''}>36 months</option>
+                                    <option value="84" ${adminSettings.system.dataRetention.auditLogs === 84 ? 'selected' : ''}>7 years</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button onclick="saveSystemConfig()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                Save Configuration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getSecurityComplianceContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">🔒 Security & Compliance Settings</h3>
+                        <p class="text-gray-600">Configure audit logging, data export controls, and security policies.</p>
+                    </div>
+
+                    <!-- Audit Trail Settings -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Audit Trail Configuration</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Events to Log</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.auditEvents.loginLogout ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">User Login/Logout</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.auditEvents.sessionUpdates ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Session Creation/Updates</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.auditEvents.checklistChanges ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Verification Checklist Changes</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.auditEvents.dataExport ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Data Export Activities</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.auditEvents.configChanges ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Configuration Changes</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Export Controls -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Data Export Controls</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Who can export verification data?</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="radio" name="exportPermission" value="admin" ${adminSettings.security.exportPermission === 'admin' ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                        <label class="ml-2 text-sm text-gray-700">Administrators only</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" name="exportPermission" value="all" ${adminSettings.security.exportPermission === 'all' ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                        <label class="ml-2 text-sm text-gray-700">All users</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" name="exportPermission" value="none" ${adminSettings.security.exportPermission === 'none' ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                        <label class="ml-2 text-sm text-gray-700">No one (disabled)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Export formats allowed</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.exportFormats.csv ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">CSV Export</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.exportFormats.pdf ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">PDF Reports</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.security.exportFormats.json ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">JSON Export</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <button onclick="saveSecuritySettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Save Security Settings
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getIntegrationsContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">🔗 Integration Configuration</h3>
+                        <p class="text-gray-600">Configure video platforms, directory services, and notification channels.</p>
+                    </div>
+
+                    <!-- Video Platform Settings -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Video Platform Settings</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Default Platform</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="zoom">Zoom</option>
+                                    <option value="meet">Google Meet</option>
+                                    <option value="teams">Microsoft Teams</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Zoom API Key</label>
+                                    <input type="password" placeholder="Enter API key" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Zoom Secret</label>
+                                    <input type="password" placeholder="Enter secret" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Directory Integration -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Directory Integration</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Directory Type</label>
+                                <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="none">None (Manual Users)</option>
+                                    <option value="ldap">LDAP</option>
+                                    <option value="ad">Active Directory</option>
+                                    <option value="google">Google Workspace</option>
+                                    <option value="azure">Azure AD</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Directory Server URL</label>
+                                    <input type="text" placeholder="ldap://server.company.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Base DN</label>
+                                    <input type="text" placeholder="dc=company,dc=com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Configuration -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Email Configuration</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">SMTP Server</label>
+                                <input type="text" placeholder="smtp.company.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
+                                <input type="number" value="587" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">From Email</label>
+                                <input type="email" placeholder="noreply@company.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">From Name</label>
+                                <input type="text" placeholder="ID Verification System" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slack Integration -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Slack Integration</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Slack Webhook URL</label>
+                                <input type="text" placeholder="https://hooks.slack.com/services/..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Default Channel</label>
+                                <input type="text" placeholder="#verification-alerts" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="mt-4">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Save Integration Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getVerificationSettingsContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">📋 Verification Process Settings</h3>
+                        <p class="text-gray-600">Customize verification requirements, ID types, and escalation rules.</p>
+                    </div>
+
+                    <!-- Checklist Configuration -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Verification Checklist Configuration</h4>
+                        <p class="text-sm text-gray-600 mb-4">Customize the verification checklist and mark required items.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                                <div class="flex items-center">
+                                    <input type="checkbox" ${adminSettings.verification.checklist.photoIdPresented.enabled ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">Photo ID Presented</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs text-gray-500">Required:</label>
+                                    <input type="checkbox" ${adminSettings.verification.checklist.photoIdPresented.required ? 'checked' : ''} class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                                <div class="flex items-center">
+                                    <input type="checkbox" ${adminSettings.verification.checklist.nameMatches.enabled ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">Name Matches Directory</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs text-gray-500">Required:</label>
+                                    <input type="checkbox" ${adminSettings.verification.checklist.nameMatches.required ? 'checked' : ''} class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                                <div class="flex items-center">
+                                    <input type="checkbox" ${adminSettings.verification.checklist.faceMatches.enabled ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">Face Matches Photo ID</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs text-gray-500">Required:</label>
+                                    <input type="checkbox" ${adminSettings.verification.checklist.faceMatches.required ? 'checked' : ''} class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                                <div class="flex items-center">
+                                    <input type="checkbox" ${adminSettings.verification.checklist.documentAuthentic.enabled ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">Document Appears Authentic</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs text-gray-500">Required:</label>
+                                    <input type="checkbox" ${adminSettings.verification.checklist.documentAuthentic.required ? 'checked' : ''} class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                                <div class="flex items-center">
+                                    <input type="checkbox" ${adminSettings.verification.checklist.notesRecorded.enabled ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">Session Notes Recorded</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs text-gray-500">Required:</label>
+                                    <input type="checkbox" ${adminSettings.verification.checklist.notesRecorded.required ? 'checked' : ''} class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ID Types -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Accepted ID Types</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.driversLicense ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Driver's License</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.passport ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Passport</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.stateId ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">State ID Card</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.militaryId ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Military ID</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.employeeBadge ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Employee Badge</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" ${adminSettings.verification.acceptedIdTypes.otherGovId ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Other Government ID</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Escalation Rules -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Escalation Rules</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Escalate to senior staff when:</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.verification.escalationRules.faceNoMatch ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Face doesn't match ID photo</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.verification.escalationRules.nameNoMatch ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Name doesn't match directory</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.verification.escalationRules.documentSuspicious ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Document appears suspicious</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" ${adminSettings.verification.escalationRules.sessionTimeout ? 'checked' : ''} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">Session exceeds time limit</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button onclick="saveVerificationSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Save Verification Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getBrandingContent() {
+            return `
+                <div class="max-w-4xl">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">🎨 Branding & Customization</h3>
+                        <p class="text-gray-600">Customize the appearance and branding of your verification system.</p>
+                    </div>
+
+                    <!-- Company Branding -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Company Branding</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                <input type="text" value="${adminSettings.branding.companyName}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Company Logo URL</label>
+                                <input type="text" value="${adminSettings.branding.companyLogo}" placeholder="https://company.com/logo.png" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                                    <input type="color" value="${adminSettings.branding.primaryColor}" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                                    <input type="color" value="${adminSettings.branding.secondaryColor}" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Fields -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Custom Fields</h4>
+                        <p class="text-sm text-gray-600 mb-4">Add custom fields to verification sessions for your organization's needs.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-md">
+                                <input type="text" placeholder="Field name" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <select class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="text">Text</option>
+                                    <option value="number">Number</option>
+                                    <option value="date">Date</option>
+                                    <option value="select">Dropdown</option>
+                                </select>
+                                <button class="text-red-600 hover:text-red-900">Remove</button>
+                            </div>
+                        </div>
+                        <button class="mt-3 text-blue-600 hover:text-blue-900 text-sm font-medium">+ Add Custom Field</button>
+                    </div>
+
+                    <!-- Email Templates -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Email Templates</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Meeting Invitation Subject</label>
+                                <input type="text" value="${adminSettings.branding.emailTemplates.invitationSubject}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Meeting Invitation Body</label>
+                                <textarea rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">${adminSettings.branding.emailTemplates.invitationBody}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Layout -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Dashboard Layout</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Show statistics cards</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Show quick actions panel</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Show search and filter panel</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label class="ml-2 text-sm text-gray-700">Show recent sessions list</label>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button onclick="saveBrandingSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                Save Branding Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Admin Settings Storage and Functionality
+        const adminSettings = {
+            users: [
+                {
+                    id: 'user1',
+                    name: 'Michael Rodriguez',
+                    email: 'michael@company.com',
+                    role: 'admin',
+                    status: 'active',
+                    createdAt: '2024-01-01'
+                },
+                {
+                    id: 'user2',
+                    name: 'Sarah Johnson',
+                    email: 'sarah@company.com',
+                    role: 'operator',
+                    status: 'active',
+                    createdAt: '2024-01-15'
+                }
+            ],
+            system: {
+                meetingDuration: 30,
+                reminderTime: 15,
+                escalationTime: 24,
+                sessionTimeout: 120,
+                requiredFields: {
+                    photoIdPresented: true,
+                    nameMatches: true,
+                    faceMatches: true,
+                    documentAuthentic: false,
+                    notesRecorded: true
+                },
+                dataRetention: {
+                    verificationRecords: 24,
+                    auditLogs: 36
+                }
+            },
+            security: {
+                auditEvents: {
+                    loginLogout: true,
+                    sessionUpdates: true,
+                    checklistChanges: true,
+                    dataExport: true,
+                    configChanges: false
+                },
+                exportPermission: 'admin',
+                exportFormats: {
+                    csv: true,
+                    pdf: false,
+                    json: false
+                }
+            },
+            verification: {
+                checklist: {
+                    photoIdPresented: { enabled: true, required: true },
+                    nameMatches: { enabled: true, required: true },
+                    faceMatches: { enabled: true, required: true },
+                    documentAuthentic: { enabled: false, required: false },
+                    notesRecorded: { enabled: true, required: false }
+                },
+                acceptedIdTypes: {
+                    driversLicense: true,
+                    passport: true,
+                    stateId: false,
+                    militaryId: false,
+                    employeeBadge: false,
+                    otherGovId: false
+                },
+                escalationRules: {
+                    faceNoMatch: true,
+                    nameNoMatch: true,
+                    documentSuspicious: false,
+                    sessionTimeout: false
+                }
+            },
+            branding: {
+                companyName: 'VeriFlow',
+                companyLogo: '',
+                primaryColor: '#2563eb',
+                secondaryColor: '#1e40af',
+                customFields: [],
+                emailTemplates: {
+                    invitationSubject: 'VeriFlow Meeting Scheduled',
+                    invitationBody: 'Dear {employee_name},\n\nYour identity verification meeting has been scheduled for {meeting_date} at {meeting_time}.\n\nMeeting Link: {meeting_link}\n\nPlease have your government-issued photo ID ready.\n\nBest regards,\nIT Security Team'
+                },
+                dashboardLayout: {
+                    showQuickStats: true,
+                    defaultView: 'sessions'
+                }
+            }
+        };
+
+        function loadAdminSettings() {
+            const saved = localStorage.getItem('adminSettings');
+            if (saved) {
+                Object.assign(adminSettings, JSON.parse(saved));
+            }
+        }
+
+        function saveAdminSettings() {
+            localStorage.setItem('adminSettings', JSON.stringify(adminSettings));
+            showToast('Settings saved successfully!', 'success');
+        }
+
+        // User Management Functions
+        function addUser() {
+            const nameInput = document.querySelector('#adminContent input[type="text"]');
+            const emailInput = document.querySelector('#adminContent input[type="email"]');
+            const roleSelect = document.querySelectorAll('#adminContent select')[0];
+            const statusSelect = document.querySelectorAll('#adminContent select')[1];
+            
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const role = roleSelect.value;
+            const status = statusSelect.value;
+            
+            if (!name || !email) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Check if email already exists
+            if (adminSettings.users.some(user => user.email === email)) {
+                showToast('A user with this email already exists', 'error');
+                return;
+            }
+            
+            // Generate new user ID
+            const newId = 'user' + (Date.now());
+            
+            // Create new user
+            const newUser = {
+                id: newId,
+                name: name,
+                email: email,
+                role: role,
+                status: status,
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+            
+            // Add to adminSettings
+            adminSettings.users.push(newUser);
+            
+            // Save settings
+            saveAdminSettings();
+            
+            // Clear form
+            nameInput.value = '';
+            emailInput.value = '';
+            roleSelect.selectedIndex = 0;
+            statusSelect.selectedIndex = 0;
+            
+            // Refresh users table
+            refreshUsersTable();
+            
+            // Update user filters in the main app
+            loadUsers();
+        }
+        
+        function editUser(userId) {
+            const user = adminSettings.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // Create edit modal content
+            const editModalContent = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit User</h3>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input id="editUserName" type="text" value="${user.name}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input id="editUserEmail" type="email" value="${user.email}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <select id="editUserRole" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="operator" ${user.role === 'operator' ? 'selected' : ''}>Operator</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrator</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="editUserStatus" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            <option value="temporary" ${user.status === 'temporary' ? 'selected' : ''}>Temporary Access</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="hideConfirmationModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button onclick="saveUserEdit('${userId}')" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </div>
+            `;
+            
+            // Show in confirmation modal (repurpose for editing)
+            document.getElementById('confirmationModalContent').innerHTML = editModalContent;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+        }
+        
+        function saveUserEdit(userId) {
+            const user = adminSettings.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            const newName = document.getElementById('editUserName').value.trim();
+            const newEmail = document.getElementById('editUserEmail').value.trim();
+            const newRole = document.getElementById('editUserRole').value;
+            const newStatus = document.getElementById('editUserStatus').value;
+            
+            if (!newName || !newEmail) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Check if email already exists for another user
+            if (adminSettings.users.some(u => u.email === newEmail && u.id !== userId)) {
+                showToast('A user with this email already exists', 'error');
+                return;
+            }
+            
+            // Update user
+            user.name = newName;
+            user.email = newEmail;
+            user.role = newRole;
+            user.status = newStatus;
+            
+            // Save settings
+            saveAdminSettings();
+            
+            // Hide modal
+            hideConfirmationModal();
+            
+            // Refresh users table
+            refreshUsersTable();
+            
+            // Update user filters in the main app
+            loadUsers();
+        }
+        
+        function toggleUserStatus(userId) {
+            const user = adminSettings.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            const newStatus = user.status === 'active' ? 'inactive' : 'active';
+            const actionText = newStatus === 'active' ? 'activate' : 'deactivate';
+            
+            showConfirmationModal(
+                `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} User`,
+                `Are you sure you want to ${actionText} ${user.name}?`,
+                () => {
+                    user.status = newStatus;
+                    saveAdminSettings();
+                    refreshUsersTable();
+                    loadUsers();
+                    showToast(`User ${actionText}d successfully`, 'success');
+                },
+                actionText.charAt(0).toUpperCase() + actionText.slice(1),
+                newStatus === 'active' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+            );
+        }
+        
+        function deleteUser(userId) {
+            const user = adminSettings.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            showConfirmationModal(
+                'Delete User',
+                `Are you sure you want to permanently delete ${user.name}? This action cannot be undone.`,
+                () => {
+                    adminSettings.users = adminSettings.users.filter(u => u.id !== userId);
+                    saveAdminSettings();
+                    refreshUsersTable();
+                    loadUsers();
+                    showToast('User deleted successfully', 'success');
+                },
+                'Delete',
+                'bg-red-600 hover:bg-red-700'
+            );
+        }
+        
+        function refreshUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = adminSettings.users.map(user => {
+                const roleColor = user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+                const statusColor = user.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                   user.status === 'inactive' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                                   
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleColor}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                            <button onclick="toggleUserStatus('${user.id}')" class="text-${user.status === 'active' ? 'red' : 'green'}-600 hover:text-${user.status === 'active' ? 'red' : 'green'}-900 mr-3">${user.status === 'active' ? 'Disable' : 'Enable'}</button>
+                            <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-900">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function saveSystemConfig() {
+            // Get form values
+            const duration = document.querySelector('#adminContent input[type="number"]').value;
+            const reminder = document.querySelectorAll('#adminContent input[type="number"]')[1].value;
+            const escalation = document.querySelectorAll('#adminContent input[type="number"]')[2].value;
+            const timeout = document.querySelectorAll('#adminContent input[type="number"]')[3].value;
+            
+            // Update settings
+            adminSettings.system.meetingDuration = parseInt(duration);
+            adminSettings.system.reminderTime = parseInt(reminder);
+            adminSettings.system.escalationTime = parseInt(escalation);
+            adminSettings.system.sessionTimeout = parseInt(timeout);
+            
+            // Get required fields
+            const checkboxes = document.querySelectorAll('#adminContent input[type="checkbox"]');
+            adminSettings.system.requiredFields = {
+                photoIdPresented: checkboxes[0].checked,
+                nameMatches: checkboxes[1].checked,
+                faceMatches: checkboxes[2].checked,
+                documentAuthentic: checkboxes[3].checked,
+                notesRecorded: checkboxes[4].checked
+            };
+            
+            // Get retention settings
+            const selects = document.querySelectorAll('#adminContent select');
+            adminSettings.system.dataRetention = {
+                verificationRecords: parseInt(selects[0].value),
+                auditLogs: parseInt(selects[1].value)
+            };
+            
+            saveAdminSettings();
+        }
+
+        function saveSecuritySettings() {
+            // Get audit events
+            const auditCheckboxes = document.querySelectorAll('#adminContent .space-y-2 input[type="checkbox"]');
+            adminSettings.security.auditEvents = {
+                loginLogout: auditCheckboxes[0].checked,
+                sessionUpdates: auditCheckboxes[1].checked,
+                checklistChanges: auditCheckboxes[2].checked,
+                dataExport: auditCheckboxes[3].checked,
+                configChanges: auditCheckboxes[4].checked
+            };
+            
+            // Get export permission
+            const exportRadio = document.querySelector('#adminContent input[name="exportPermission"]:checked');
+            if (exportRadio) {
+                adminSettings.security.exportPermission = exportRadio.value;
+            }
+            
+            // Get export formats
+            const formatCheckboxes = document.querySelectorAll('#adminContent input[type="checkbox"]');
+            const formatStartIndex = formatCheckboxes.length - 3; // Last 3 checkboxes are formats
+            adminSettings.security.exportFormats = {
+                csv: formatCheckboxes[formatStartIndex].checked,
+                pdf: formatCheckboxes[formatStartIndex + 1].checked,
+                json: formatCheckboxes[formatStartIndex + 2].checked
+            };
+            
+            saveAdminSettings();
+        }
+
+        function saveVerificationSettings() {
+            // Get checklist configuration
+            const checklistRows = document.querySelectorAll('#adminContent .space-y-3 > div');
+            const checklist = {};
+            
+            checklistRows.forEach((row, index) => {
+                const enabledBox = row.querySelector('input[type="checkbox"]');
+                const requiredBox = row.querySelectorAll('input[type="checkbox"]')[1];
+                const keys = ['photoIdPresented', 'nameMatches', 'faceMatches', 'documentAuthentic', 'notesRecorded'];
+                
+                if (keys[index]) {
+                    checklist[keys[index]] = {
+                        enabled: enabledBox.checked,
+                        required: requiredBox ? requiredBox.checked : false
+                    };
+                }
+            });
+            
+            adminSettings.verification.checklist = checklist;
+            saveAdminSettings();
+        }
+
+        function saveBrandingSettings() {
+            // Get all form inputs in the branding section
+            const inputs = document.querySelectorAll('#adminContent input, #adminContent textarea');
+            
+            // Get company branding values
+            adminSettings.branding.companyName = inputs[0].value || 'VeriFlow';
+            adminSettings.branding.companyLogo = inputs[1].value || '';
+            adminSettings.branding.primaryColor = inputs[2].value || '#2563eb';
+            adminSettings.branding.secondaryColor = inputs[3].value || '#1e40af';
+            
+            // Get email template values
+            const subjectInput = document.querySelector('#adminContent input[value*="Meeting Scheduled"]');
+            const bodyTextarea = document.querySelector('#adminContent textarea');
+            
+            if (subjectInput) {
+                adminSettings.branding.emailTemplates.invitationSubject = subjectInput.value;
+            }
+            if (bodyTextarea) {
+                adminSettings.branding.emailTemplates.invitationBody = bodyTextarea.value;
+            }
+            
+            // Save to localStorage
+            saveAdminSettings();
+            
+            // Apply branding immediately
+            applyBrandingToApp();
+        }
+
+        function applyBrandingToApp() {
+            // Update the page title with company name
+            document.title = adminSettings.branding.companyName;
+            
+            // Update welcome text to be personal to the user
+            const welcomeElements = document.querySelectorAll('p');
+            welcomeElements.forEach(el => {
+                if (el.textContent.includes('Welcome to the Identity Verification System') || el.textContent.includes('Welcome to VeriFlow')) {
+                    el.textContent = `Welcome, ${state.user?.name || 'User'}`;
+                }
+            });
+            
+            // Apply custom colors to navigation and buttons
+            const navElement = document.querySelector('nav.bg-blue-800');
+            if (navElement && adminSettings.branding.primaryColor !== '#2563eb') {
+                navElement.style.backgroundColor = adminSettings.branding.primaryColor;
+            }
+            
+            // Apply secondary color to buttons
+            const buttons = document.querySelectorAll('.bg-blue-600, .bg-blue-700');
+            buttons.forEach(btn => {
+                if (adminSettings.branding.secondaryColor !== '#1e40af') {
+                    btn.style.backgroundColor = adminSettings.branding.secondaryColor;
+                }
+            });
+            
+            // Display logo if provided (keep with app name in header)
+            if (adminSettings.branding.companyLogo) {
+                const logoContainer = document.querySelector('.flex.items-center h1');
+                if (logoContainer && !document.querySelector('.company-logo')) {
+                    const logo = document.createElement('img');
+                    logo.src = adminSettings.branding.companyLogo;
+                    logo.alt = 'Company Logo';
+                    logo.className = 'company-logo h-8 w-auto mr-3';
+                    logoContainer.parentNode.insertBefore(logo, logoContainer);
+                }
+            }
+            
+            // Add company footer if it doesn't exist
+            addCompanyFooter();
+            
+            showToast('Branding applied successfully!', 'success');
+        }
+
+        function addCompanyFooter() {
+            // Check if footer already exists
+            if (document.querySelector('.company-footer')) return;
+            
+            // Create footer element
+            const footer = document.createElement('div');
+            footer.className = 'company-footer absolute bottom-4 left-0 right-0 text-center py-2 text-sm text-gray-500 pointer-events-none';
+            footer.innerHTML = `
+                <p class="opacity-75 hover:opacity-100 transition-opacity">We ❤️ ${adminSettings.branding.companyName}</p>
+            `;
+            
+            // Add footer to the main content area instead of body
+            const mainContent = document.querySelector('.min-h-screen');
+            if (mainContent) {
+                // Make sure main content has relative positioning for absolute footer
+                mainContent.style.position = 'relative';
+                mainContent.style.paddingBottom = '60px'; // Space for footer
+                mainContent.appendChild(footer);
+            } else {
+                // Fallback to body if main content not found
+                document.body.appendChild(footer);
+            }
+        }
+
+        // Search and Filter Functions
+        function handleSearchKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                performSearch();
+            }
+        }
+
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.trim();
+            
+            // Update filter state
+            state.filters.search = searchTerm;
+            
+            // Load sessions with search
+            loadSessions();
+            
+            // Show feedback if search term is provided
+            if (searchTerm) {
+                showToast(`Searching for "${searchTerm}"...`, 'info');
+            }
+        }
+
+        function onFilterChange() {
+            // Update filter state from form inputs
+            state.filters.status = document.getElementById('statusFilter').value;
+            state.filters.assignedToId = document.getElementById('assignedFilter').value;
+            state.filters.meetingPlatform = document.getElementById('platformFilter').value;
+            state.filters.dateFrom = document.getElementById('dateFromFilter').value;
+            state.filters.dateTo = document.getElementById('dateToFilter').value;
+            
+            // Load sessions with new filters
+            loadSessions();
+        }
+
+        function clearAllFilters() {
+            // Reset filter state
+            state.filters = {
+                search: '',
+                status: '',
+                assignedToId: '',
+                meetingPlatform: '',
+                dateFrom: '',
+                dateTo: ''
+            };
+            
+            // Reset form inputs
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) statusFilter.value = '';
+            
+            const assignedFilter = document.getElementById('assignedFilter');
+            if (assignedFilter) assignedFilter.value = '';
+            
+            const platformFilter = document.getElementById('platformFilter');
+            if (platformFilter) platformFilter.value = '';
+            
+            const dateFromFilter = document.getElementById('dateFromFilter');
+            if (dateFromFilter) dateFromFilter.value = '';
+            
+            const dateToFilter = document.getElementById('dateToFilter');
+            if (dateToFilter) dateToFilter.value = '';
+            
+            // Hide clear button and active filters
+            document.getElementById('clearFiltersBtn').classList.add('hidden');
+            document.getElementById('activeFilters').classList.add('hidden');
+            
+            // Reload sessions
+            loadSessions();
+            showToast('All filters cleared', 'info');
+        }
+
+        function updateActiveFiltersDisplay() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const filterTagsDiv = document.getElementById('filterTags');
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            
+            if (!activeFiltersDiv || !filterTagsDiv || !clearBtn) return;
+            
+            // Check if any filters are active
+            const hasActiveFilters = Object.values(state.filters).some(value => value !== '');
+            
+            if (!hasActiveFilters) {
+                activeFiltersDiv.classList.add('hidden');
+                clearBtn.classList.add('hidden');
+                return;
+            }
+            
+            // Show active filters
+            activeFiltersDiv.classList.remove('hidden');
+            clearBtn.classList.remove('hidden');
+            
+            // Build filter tags
+            const tags = [];
+            
+            if (state.filters.search) {
+                tags.push(createFilterTag('Search', `"${state.filters.search}"`, 'search'));
+            }
+            
+            if (state.filters.status) {
+                const statusText = getStatusDisplayText(state.filters.status);
+                tags.push(createFilterTag('Status', statusText, 'status'));
+            }
+            
+            if (state.filters.assignedToId) {
+                const user = state.availableUsers.find(u => u.id === state.filters.assignedToId);
+                const userName = user ? user.name : 'Unknown User';
+                tags.push(createFilterTag('Assigned To', userName, 'assignedToId'));
+            }
+            
+            if (state.filters.meetingPlatform) {
+                const platformText = getPlatformDisplayText(state.filters.meetingPlatform);
+                tags.push(createFilterTag('Platform', platformText, 'meetingPlatform'));
+            }
+            
+            if (state.filters.dateFrom) {
+                tags.push(createFilterTag('From Date', state.filters.dateFrom, 'dateFrom'));
+            }
+            
+            if (state.filters.dateTo) {
+                tags.push(createFilterTag('To Date', state.filters.dateTo, 'dateTo'));
+            }
+            
+            filterTagsDiv.innerHTML = tags.join('');
+        }
+
+        function createFilterTag(label, value, filterKey) {
+            return `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                    <span class="font-medium">${label}:</span>
+                    <span class="ml-1">${value}</span>
+                    <button 
+                        onclick="removeFilter('${filterKey}')"
+                        class="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
+                    >
+                        ×
+                    </button>
+                </span>
+            `;
+        }
+
+        function removeFilter(filterKey) {
+            state.filters[filterKey] = '';
+            
+            // Reset corresponding form input
+            const inputMap = {
+                'search': 'searchInput',
+                'status': 'statusFilter',
+                'assignedToId': 'assignedFilter',
+                'meetingPlatform': 'platformFilter',
+                'dateFrom': 'dateFromFilter',
+                'dateTo': 'dateToFilter'
+            };
+            
+            const inputId = inputMap[filterKey];
+            if (inputId) {
+                const element = document.getElementById(inputId);
+                if (element) {
+                    element.value = '';
+                }
+            }
+            
+            loadSessions();
+        }
+
+        function getStatusDisplayText(status) {
+            const statusMap = {
+                'pending': '⏳ Pending',
+                'in_progress': '🔄 In Progress',
+                'completed': '✅ Completed',
+                'rejected': '❌ Rejected',
+                'escalated': '⚠️ Escalated'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getPlatformDisplayText(platform) {
+            const platformMap = {
+                'zoom': '🔵 Zoom',
+                'meet': '🟢 Google Meet',
+                'teams': '🟣 Microsoft Teams'
+            };
+            return platformMap[platform] || platform;
+        }
+
+        // Dynamic Checklist Generation
+        function generateDynamicChecklist(session) {
+            // Load admin settings
+            loadAdminSettings();
+            
+            const checklistItems = [
+                {
+                    key: 'photoIdPresented',
+                    icon: '📱',
+                    label: 'Photo ID presented to camera',
+                    config: adminSettings.verification.checklist.photoIdPresented
+                },
+                {
+                    key: 'nameMatches',
+                    icon: '👤',
+                    label: 'Name on ID matches directory',
+                    config: adminSettings.verification.checklist.nameMatches
+                },
+                {
+                    key: 'faceMatches',
+                    icon: '😊',
+                    label: 'Face matches photo on ID',
+                    config: adminSettings.verification.checklist.faceMatches
+                },
+                {
+                    key: 'documentAuthentic',
+                    icon: '✅',
+                    label: 'Document appears authentic',
+                    config: adminSettings.verification.checklist.documentAuthentic
+                },
+                {
+                    key: 'notesRecorded',
+                    icon: '📝',
+                    label: 'Verification notes recorded',
+                    config: adminSettings.verification.checklist.notesRecorded
+                }
+            ];
+            
+            // Filter only enabled items and generate HTML
+            return checklistItems
+                .filter(item => item.config.enabled)
+                .map(item => {
+                    const isRequired = item.config.required;
+                    const requiredIndicator = isRequired ? '<span class="text-red-500 font-bold ml-1">*</span>' : '';
+                    const borderClass = isRequired ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-white';
+                    
+                    return `
+                        <label class="flex items-center p-2 ${borderClass} border rounded-md transition-colors hover:bg-gray-50">
+                            <input 
+                                type="checkbox" 
+                                ${session.verificationChecklist?.[item.key] ? 'checked' : ''}
+                                onchange="updateChecklistItem('${session.id}', '${item.key}', this.checked)"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <span class="ml-2 text-sm text-gray-900">${item.icon} ${item.label}${requiredIndicator}</span>
+                            ${isRequired ? '<span class="ml-auto text-xs text-red-600 font-medium">Required</span>' : ''}
+                        </label>
+                    `;
+                }).join('');
+        }
+
+        // Session Details Functions
+        async function openSessionDetails(sessionId) {
+            try {
+                const sessionResponse = await api.request(`/verification/${sessionId}`);
+                
+                if (sessionResponse.success) {
+                    // Load admin settings to get users
+                    loadAdminSettings();
+                    
+                    // Use admin users instead of backend users
+                    const adminUsers = adminSettings.users || [];
+                    showSessionDetails(sessionResponse.data, adminUsers);
+                } else {
+                    showToast('Failed to load session details: ' + (sessionResponse.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error loading session details:', error);
+                showToast('Failed to load session details: ' + error.message, 'error');
+            }
+        }
+
+        function closeSessionDetails() {
+            document.getElementById('sessionDetailsModal').classList.add('hidden');
+        }
+
+        function showSessionDetails(session, availableUsers = []) {
+            try {
+                const modal = document.getElementById('sessionDetailsModal');
+                const content = document.getElementById('sessionDetailsContent');
+                
+                // Store current session globally for meeting functions
+                window.currentSession = session;
+                
+                content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column: Session Info & Status -->
+                    <div class="space-y-6">
+                        <!-- Session Overview -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-lg font-medium text-gray-900 mb-3">Session Overview</h4>
+                            <div class="space-y-2">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500">Employee Name</label>
+                                    <p class="text-gray-900">${session.employeeName}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500">Email</label>
+                                    <p class="text-gray-900">${session.employeeEmail}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500">Request Type</label>
+                                    <p class="text-gray-900">${session.ticket?.title || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500">Assigned To</label>
+                                    <select 
+                                        id="assignedToSelect" 
+                                        onchange="updateSessionAssignment('${session.id}', this.value)"
+                                        class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="">Unassigned</option>
+                                        ${availableUsers.map(user => `
+                                            <option value="${user.id}" ${session.assignedToId === user.id ? 'selected' : ''}>
+                                                ${user.name} (${user.role})
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500">Created</label>
+                                    <p class="text-gray-900">${new Date(session.createdAt).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Meeting Section -->
+                        <div class="bg-blue-50 border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                                    🎥 Video Meeting
+                                </h4>
+                                <span id="meetingStatusBadge" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                    Not Scheduled
+                                </span>
+                            </div>
+                            
+                            <div id="meetingScheduleForm" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Platform</label>
+                                        <select 
+                                            id="meetingPlatform" 
+                                            class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">Select Platform</option>
+                                            <option value="zoom">🔵 Zoom</option>
+                                            <option value="meet">🟢 Google Meet</option>
+                                            <option value="teams">🟣 Microsoft Teams</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Date</label>
+                                        <input 
+                                            type="date" 
+                                            id="meetingDate"
+                                            class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-gray-400 transition-colors"
+                                            style="color-scheme: light; min-height: 38px;"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Time</label>
+                                        <input 
+                                            type="time" 
+                                            id="meetingTime"
+                                            class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-gray-400 transition-colors"
+                                            style="color-scheme: light; min-height: 38px;"
+                                        />
+                                    </div>
+                                </div>
+                                <button 
+                                    id="scheduleMeetingBtn"
+                                    onclick="scheduleMeeting('${session.id}')"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors font-medium"
+                                >
+                                    📅 Schedule Meeting
+                                </button>
+                            </div>
+                            
+                            <div id="scheduledMeetingDisplay" class="hidden space-y-4">
+                                <div class="bg-white rounded-lg p-4 border">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center space-x-2">
+                                            <span id="platformIcon" class="text-lg"></span>
+                                            <span id="platformName" class="font-medium"></span>
+                                        </div>
+                                        <div id="meetingDateTime" class="text-sm text-gray-600"></div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-2 mb-3">
+                                        <button 
+                                            id="joinMeetingBtn"
+                                            onclick="openMeetingLink()"
+                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors font-medium"
+                                        >
+                                            🚀 Start Meeting
+                                        </button>
+                                        <button 
+                                            id="copyLinkBtn"
+                                            onclick="copyMeetingLink()"
+                                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors"
+                                        >
+                                            📋 Copy
+                                        </button>
+                                        <button 
+                                            id="meetingActionBtn"
+                                            onclick="updateMeetingStatus()"
+                                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors"
+                                        >
+                                            ▶️
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="flex space-x-2">
+                                        <button 
+                                            onclick="showRescheduleMeeting('${session.id}')"
+                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md transition-colors text-sm"
+                                        >
+                                            📅 Reschedule
+                                        </button>
+                                        <button 
+                                            onclick="confirmCancelMeeting('${session.id}')"
+                                            class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md transition-colors text-sm"
+                                        >
+                                            ❌ Cancel Meeting
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="meetingDetails" class="text-xs text-gray-600"></div>
+                                </div>
+                                
+                                <div id="meetingAgenda" class="bg-gray-50 rounded-lg p-4 hidden">
+                                    <h5 class="font-medium text-gray-900 mb-2">📋 Meeting Agenda</h5>
+                                    <pre id="agendaText" class="text-sm text-gray-700 whitespace-pre-wrap"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Management -->
+                        <div class="bg-white border rounded-lg p-4">
+                            <h4 class="text-lg font-medium text-gray-900 mb-3">Status Management</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Status</label>
+                                    <select 
+                                        id="sessionStatus" 
+                                        onchange="updateSessionStatus('${session.id}', this.value)"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="pending" ${session.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="in_progress" ${session.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="completed" ${session.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="rejected" ${session.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                                        <option value="escalated" ${session.status === 'escalated' ? 'selected' : ''}>Escalated</option>
+                                    </select>
+                                </div>
+
+                                <!-- ID Information -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ID Type</label>
+                                    <select 
+                                        id="idType" 
+                                        onchange="updateSessionField('${session.id}', 'idType', this.value)"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="" ${!session.idType ? 'selected' : ''}>Select ID Type</option>
+                                        <option value="drivers_license" ${session.idType === 'drivers_license' ? 'selected' : ''}>Driver's License</option>
+                                        <option value="passport" ${session.idType === 'passport' ? 'selected' : ''}>Passport</option>
+                                        <option value="state_id" ${session.idType === 'state_id' ? 'selected' : ''}>State ID</option>
+                                        <option value="military_id" ${session.idType === 'military_id' ? 'selected' : ''}>Military ID</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Video Call Link</label>
+                                    <input 
+                                        type="url" 
+                                        id="videoCallLink" 
+                                        value="${session.videoCallLink || ''}"
+                                        onchange="updateSessionField('${session.id}', 'videoCallLink', this.value)"
+                                        placeholder="https://zoom.us/j/123456789"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Verification Checklist -->
+                    <div class="space-y-6">
+                        <!-- Verification Checklist -->
+                        <div class="bg-white border rounded-lg p-4">
+                            <h4 class="text-lg font-medium text-gray-900 mb-3">🔍 Verification Checklist</h4>
+                            <div class="space-y-3">
+                                ${generateDynamicChecklist(session)}
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div class="bg-white border rounded-lg p-4">
+                            <h4 class="text-lg font-medium text-gray-900 mb-3">📝 Verification Notes</h4>
+                            <textarea 
+                                id="sessionNotes" 
+                                rows="6"
+                                placeholder="Record your observations during the verification process..."
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >${session.notes || ''}</textarea>
+                            <button 
+                                onclick="saveSessionNotes('${session.id}')"
+                                class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+                            >
+                                Save Notes
+                            </button>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-lg font-medium text-gray-900 mb-3">⚡ Quick Actions</h4>
+                            <div class="space-y-2">
+                                <button 
+                                    onclick="window.open(document.getElementById('videoCallLink').value || 'https://meet.google.com/new', '_blank')"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+                                >
+                                    🎥 Join/Start Video Call
+                                </button>
+                                <button 
+                                    onclick="showToast('Email feature coming soon!', 'info')"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+                                >
+                                    📧 Send Email to Employee
+                                </button>
+                                <button 
+                                    onclick="updateSessionStatus('${session.id}', 'escalated')"
+                                    class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+                                >
+                                    ⚠️ Escalate to Supervisor
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button 
+                        onclick="closeSessionDetails()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition-colors"
+                    >
+                        Close
+                    </button>
+                    <button 
+                        onclick="loadSessions(); closeSessionDetails();" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                    >
+                        Save & Close
+                    </button>
+                </div>
+                            `;
+                
+                modal.classList.remove('hidden');
+                
+                // Initialize meeting display
+                updateMeetingDisplay(session);
+            } catch (error) {
+                console.error('Error in showSessionDetails:', error);
+                showToast('Error displaying session details: ' + error.message, 'error');
+            }
+        }
+
+        async function updateSessionStatus(sessionId, status) {
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status })
+                });
+                
+                if (response.success) {
+                    showToast(`Status updated to: ${status}`, 'success');
+                    // Update the status selector to reflect the change
+                    const statusSelect = document.getElementById('sessionStatus');
+                    if (statusSelect) statusSelect.value = status;
+                } else {
+                    showToast('Failed to update status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showToast('Failed to update status', 'error');
+            }
+        }
+
+        async function updateSessionField(sessionId, field, value) {
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ [field]: value })
+                });
+                
+                if (response.success) {
+                    showToast(`${field} updated successfully`, 'success');
+                } else {
+                    showToast(`Failed to update ${field}`, 'error');
+                }
+            } catch (error) {
+                console.error(`Error updating ${field}:`, error);
+                showToast(`Failed to update ${field}`, 'error');
+            }
+        }
+
+        async function updateChecklistItem(sessionId, item, checked) {
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ 
+                        verificationChecklist: { [item]: checked }
+                    })
+                });
+                
+                if (response.success) {
+                    showToast('Checklist updated successfully', 'success');
+                } else {
+                    showToast('Failed to update checklist', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating checklist:', error);
+                showToast('Failed to update checklist', 'error');
+            }
+        }
+
+        async function saveSessionNotes(sessionId) {
+            const notes = document.getElementById('sessionNotes').value;
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ notes })
+                });
+                
+                if (response.success) {
+                    showToast('Notes saved successfully', 'success');
+                    // Auto-check the notes recorded checkbox
+                    updateChecklistItem(sessionId, 'notesRecorded', true);
+                    const notesCheckbox = document.querySelector('input[onchange*="notesRecorded"]');
+                    if (notesCheckbox) notesCheckbox.checked = true;
+                } else {
+                    showToast('Failed to save notes', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving notes:', error);
+                showToast('Failed to save notes', 'error');
+            }
+        }
+
+        // Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                'success': 'bg-green-600 text-white',
+                'error': 'bg-red-600 text-white',
+                'warning': 'bg-yellow-600 text-white',
+                'info': 'bg-blue-600 text-white'
+            };
+            
+            const icons = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            };
+            
+            toast.className = `${colors[type]} px-6 py-4 rounded-lg shadow-xl border border-white/20 flex items-center space-x-3 min-w-96 max-w-md transform transition-all duration-300 translate-x-full backdrop-blur-sm`;
+            toast.innerHTML = `
+                <span class="text-lg">${icons[type]}</span>
+                <span class="flex-1">${message}</span>
+                <button onclick="removeToast(this.parentElement)" class="text-white hover:text-gray-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                removeToast(toast);
+            }, 4000);
+        }
+        
+        function removeToast(toast) {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.parentElement.removeChild(toast);
+                }
+            }, 300);
+        }
+        
+        // Confirmation Modal Functions
+        function showConfirmationModal(title, message, onConfirm, confirmText = 'Confirm', confirmClass = 'bg-red-600 hover:bg-red-700') {
+            const modal = document.getElementById('confirmationModal');
+            const titleEl = document.getElementById('confirmationTitle');
+            const messageEl = document.getElementById('confirmationMessage');
+            const confirmBtn = document.getElementById('confirmationConfirm');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            confirmBtn.textContent = confirmText;
+            confirmBtn.className = `flex-1 ${confirmClass} text-white px-4 py-2 rounded-md transition-colors`;
+            
+            confirmBtn.onclick = () => {
+                hideConfirmationModal();
+                onConfirm();
+            };
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function hideConfirmationModal() {
+            document.getElementById('confirmationModal').classList.add('hidden');
+        }
+
+        // Assignment Functions
+        async function updateSessionAssignment(sessionId, assignedToId) {
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ assignedToId })
+                });
+                
+                if (response.success) {
+                    showToast('Assignment updated successfully!', 'success');
+                } else {
+                    showToast('Failed to update assignment', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating assignment:', error);
+                showToast('Failed to update assignment', 'error');
+            }
+        }
+
+        // Video Meeting Functions
+        function updateMeetingDisplay(session) {
+            const scheduleForm = document.getElementById('meetingScheduleForm');
+            const scheduledDisplay = document.getElementById('scheduledMeetingDisplay');
+            const statusBadge = document.getElementById('meetingStatusBadge');
+            
+            if (!session.meetingStatus || session.meetingStatus === 'not_scheduled') {
+                // Show scheduling form
+                scheduleForm.style.display = 'block';
+                scheduledDisplay.style.display = 'none';
+                statusBadge.textContent = 'Not Scheduled';
+                statusBadge.className = 'px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800';
+                
+                // Set minimum date to today
+                const dateInput = document.getElementById('meetingDate');
+                if (dateInput) {
+                    dateInput.min = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                // Show scheduled meeting
+                scheduleForm.style.display = 'none';
+                scheduledDisplay.style.display = 'block';
+                
+                // Update status badge
+                const statusInfo = getMeetingStatusInfo(session.meetingStatus);
+                statusBadge.textContent = statusInfo.text;
+                statusBadge.className = `px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}`;
+                
+                // Update meeting details
+                const platformIcon = document.getElementById('platformIcon');
+                const platformName = document.getElementById('platformName');
+                const meetingDateTime = document.getElementById('meetingDateTime');
+                const meetingDetails = document.getElementById('meetingDetails');
+                const joinBtn = document.getElementById('joinMeetingBtn');
+                const actionBtn = document.getElementById('meetingActionBtn');
+                const agendaDiv = document.getElementById('meetingAgenda');
+                const agendaText = document.getElementById('agendaText');
+                
+                if (platformIcon) platformIcon.textContent = getPlatformIcon(session.meetingPlatform);
+                if (platformName) platformName.textContent = session.meetingPlatform?.charAt(0).toUpperCase() + session.meetingPlatform?.slice(1) + ' Meeting';
+                if (meetingDateTime) meetingDateTime.textContent = `📅 ${session.meetingDate} at ${session.meetingTime}`;
+                if (meetingDetails) meetingDetails.innerHTML = `<strong>Meeting ID:</strong> ${session.meetingId}`;
+                
+                // Update button states
+                if (joinBtn) {
+                    joinBtn.textContent = session.meetingStatus === 'in_progress' ? '🚀 Join Meeting' : '🚀 Start Meeting';
+                    joinBtn.onclick = () => openMeetingLink(session.videoCallLink);
+                }
+                
+                if (actionBtn) {
+                    if (session.meetingStatus === 'scheduled') {
+                        actionBtn.textContent = '▶️';
+                        actionBtn.onclick = () => updateMeetingStatus(session.id, 'in_progress');
+                    } else if (session.meetingStatus === 'in_progress') {
+                        actionBtn.textContent = '✅';
+                        actionBtn.onclick = () => updateMeetingStatus(session.id, 'completed');
+                    } else {
+                        actionBtn.style.display = 'none';
+                    }
+                }
+                
+                // Show agenda if available
+                if (session.meetingAgenda && agendaDiv && agendaText) {
+                    agendaDiv.style.display = 'block';
+                    agendaText.textContent = session.meetingAgenda;
+                }
+            }
+        }
+
+        async function scheduleMeeting(sessionId) {
+            const platform = document.getElementById('meetingPlatform').value;
+            const date = document.getElementById('meetingDate').value;
+            const time = document.getElementById('meetingTime').value;
+            
+            if (!platform || !date || !time) {
+                showToast('Please fill in all meeting details', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await api.request(`/verification/${sessionId}/schedule-meeting`, {
+                    method: 'POST',
+                    body: JSON.stringify({ platform, date, time })
+                });
+                
+                if (response.success) {
+                    showToast(response.message || 'Meeting scheduled successfully!', 'success');
+                    window.currentSession = response.data;
+                    updateMeetingDisplay(response.data);
+                } else {
+                    showToast('Failed to schedule meeting: ' + (response.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error scheduling meeting:', error);
+                showToast('Failed to schedule meeting: ' + error.message, 'error');
+            }
+        }
+
+        // Meeting Management Functions
+        function showRescheduleMeeting(sessionId) {
+            const currentSession = window.currentSession;
+            if (!currentSession) return;
+            
+            // Show the scheduling form again with current values
+            const scheduleForm = document.getElementById('meetingScheduleForm');
+            const scheduledDisplay = document.getElementById('scheduledMeetingDisplay');
+            
+            // Pre-fill with current values
+            document.getElementById('meetingPlatform').value = currentSession.meetingPlatform;
+            document.getElementById('meetingDate').value = currentSession.meetingDate;
+            document.getElementById('meetingTime').value = currentSession.meetingTime;
+            
+            scheduleForm.style.display = 'block';
+            scheduledDisplay.style.display = 'none';
+            
+            showToast('Update the meeting details and click Schedule Meeting', 'info');
+        }
+
+        function confirmCancelMeeting(sessionId) {
+            showConfirmationModal(
+                'Cancel Meeting',
+                'Are you sure you want to cancel this meeting? This action cannot be undone.',
+                () => cancelMeeting(sessionId),
+                'Cancel Meeting',
+                'bg-red-600 hover:bg-red-700'
+            );
+        }
+
+        async function cancelMeeting(sessionId) {
+            try {
+                const response = await api.request(`/verification/${sessionId}/meeting`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.success) {
+                    showToast(response.message || 'Meeting cancelled successfully', 'success');
+                    window.currentSession = response.data;
+                    updateMeetingDisplay(response.data);
+                } else {
+                    showToast('Failed to cancel meeting', 'error');
+                }
+            } catch (error) {
+                console.error('Error cancelling meeting:', error);
+                showToast('Failed to cancel meeting', 'error');
+            }
+        }
+
+        function openMeetingLink(link) {
+            if (link) {
+                window.open(link, '_blank');
+                showToast('Opening meeting...', 'info');
+            } else if (window.currentSession?.videoCallLink) {
+                window.open(window.currentSession.videoCallLink, '_blank');
+                showToast('Opening meeting...', 'info');
+            } else {
+                showToast('No meeting link available', 'warning');
+            }
+        }
+
+        async function copyMeetingLink() {
+            const link = window.currentSession?.videoCallLink;
+            if (link) {
+                try {
+                    await navigator.clipboard.writeText(link);
+                    showToast('Meeting link copied to clipboard!', 'success');
+                } catch (error) {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = link;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast('Meeting link copied to clipboard!', 'success');
+                }
+            } else {
+                showToast('No meeting link to copy', 'warning');
+            }
+        }
+
+        async function updateMeetingStatus(sessionId, newStatus) {
+            try {
+                const response = await api.request(`/verification/${sessionId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ meetingStatus: newStatus })
+                });
+                
+                if (response.success) {
+                    window.currentSession = response.data;
+                    updateMeetingDisplay(response.data);
+                    const statusText = newStatus === 'in_progress' ? 'Meeting started' : 'Meeting completed';
+                    showToast(statusText, 'success');
+                } else {
+                    showToast('Failed to update meeting status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating meeting status:', error);
+                showToast('Failed to update meeting status', 'error');
+            }
+        }
+
+        function getPlatformIcon(platform) {
+            const icons = {
+                'zoom': '🔵',
+                'meet': '🟢', 
+                'teams': '🟣'
+            };
+            return icons[platform] || '🎥';
+        }
+
+        function getMeetingStatusInfo(status) {
+            const statusMap = {
+                'not_scheduled': { text: 'Not Scheduled', color: 'bg-gray-100 text-gray-800' },
+                'scheduled': { text: 'Scheduled', color: 'bg-blue-100 text-blue-800' },
+                'in_progress': { text: 'In Progress', color: 'bg-green-100 text-green-800' },
+                'completed': { text: 'Completed', color: 'bg-purple-100 text-purple-800' }
+            };
+            return statusMap[status] || statusMap['not_scheduled'];
+        }
+
+        // Utility Functions
+        function getStatusColor(status) {
+            const colors = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'in_progress': 'bg-blue-100 text-blue-800',
+                'completed': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'escalated': 'bg-purple-100 text-purple-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function showCreateModal() {
+            document.getElementById('createModal').classList.remove('hidden');
+        }
+
+        function hideCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+        }
+
+        async function handleCreateSession(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await api.request('/verification', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        employeeName: document.getElementById('employeeName').value,
+                        employeeEmail: document.getElementById('employeeEmail').value,
+                        ticketTitle: document.getElementById('ticketTitle').value,
+                        ticketDescription: document.getElementById('ticketDescription').value,
+                        priority: 'medium'
+                    })
+                });
+                
+                if (response.success) {
+                    hideCreateModal();
+                    await loadSessions();
+                    showToast('Session created successfully!', 'success');
+                }
+            } catch (error) {
+                showToast('Failed to create session', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg slide-in z-50 ${
+                type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' :
+                type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' :
+                'bg-blue-50 border border-blue-200 text-blue-800'
+            }`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600">✕</button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // Render function
+        function render() {
+            const app = document.getElementById('app');
+            if (!state.user) {
+                app.innerHTML = LoginForm();
+                document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            } else {
+                app.innerHTML = Dashboard();
+                document.getElementById('createForm').addEventListener('submit', handleCreateSession);
+                // Load users for the filter dropdown when dashboard is rendered
+                if (state.availableUsers.length === 0) {
+                    loadUsers();
+                }
+            }
+        }
+
+        // Make functions global
+        window.logout = logout;
+        window.loadSessions = loadSessions;
+        window.showCreateModal = showCreateModal;
+        window.hideCreateModal = hideCreateModal;
+        window.openSessionDetails = openSessionDetails;
+        window.closeSessionDetails = closeSessionDetails;
+        window.updateSessionStatus = updateSessionStatus;
+        window.updateSessionAssignment = updateSessionAssignment;
+        window.updateChecklistItem = updateChecklistItem;
+        window.saveSessionNotes = saveSessionNotes;
+        window.scheduleMeeting = scheduleMeeting;
+        window.openMeetingLink = openMeetingLink;
+        window.copyMeetingLink = copyMeetingLink;
+        window.updateMeetingStatus = updateMeetingStatus;
+        window.showRescheduleMeeting = showRescheduleMeeting;
+        window.confirmCancelMeeting = confirmCancelMeeting;
+        window.hideConfirmationModal = hideConfirmationModal;
+        window.handleSearchKeydown = handleSearchKeydown;
+        window.performSearch = performSearch;
+        window.onFilterChange = onFilterChange;
+        window.clearAllFilters = clearAllFilters;
+        window.removeFilter = removeFilter;
+        window.showAdminSettings = showAdminSettings;
+        window.closeAdminSettings = closeAdminSettings;
+        window.showAdminSection = showAdminSection;
+        window.saveSystemConfig = saveSystemConfig;
+        window.saveSecuritySettings = saveSecuritySettings;
+        window.saveVerificationSettings = saveVerificationSettings;
+        window.saveBrandingSettings = saveBrandingSettings;
+        window.applyBrandingToApp = applyBrandingToApp;
+        window.addCompanyFooter = addCompanyFooter;
+        window.addUser = addUser;
+        window.editUser = editUser;
+        window.saveUserEdit = saveUserEdit;
+        window.toggleUserStatus = toggleUserStatus;
+        window.deleteUser = deleteUser;
+        window.refreshUsersTable = refreshUsersTable;
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load admin settings first
+            loadAdminSettings();
+            
+            // Check for existing auth
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                // Try to get user info
+                api.request('/auth/me').then(response => {
+                    if (response.success) {
+                        state.user = response.data.user;
+                        loadSessions();
+                        // Apply branding after dashboard loads
+                        setTimeout(() => {
+                            applyBrandingToApp();
+                        }, 100);
+                    } else {
+                        localStorage.removeItem('auth_token');
+                        render();
+                    }
+                }).catch(() => {
+                    localStorage.removeItem('auth_token');
+                    render();
+                });
+            } else {
+                render();
+                // Apply branding to login page too
+                setTimeout(() => {
+                    applyBrandingToApp();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

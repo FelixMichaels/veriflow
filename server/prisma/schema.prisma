@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  operator
+}
+
+enum VerificationStatus {
+  pending
+  scheduled
+  in_progress
+  completed
+  failed
+  cancelled
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  waiting_for_verification
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum IDType {
+  drivers_license
+  passport
+  state_id
+  military_id
+  other
+}
+
+enum VideoMeetingPlatform {
+  zoom
+  google_meet
+  teams
+  other
+}
+
+enum AuditActionType {
+  session_created
+  session_updated
+  session_completed
+  verification_attempt
+  user_login
+  user_logout
+  ticket_created
+  ticket_updated
+}
+
+model User {
+  id                     String                @id @default(uuid())
+  email                  String                @unique
+  name                   String
+  role                   UserRole              @default(operator)
+  googleId               String?               @unique
+  microsoftId            String?               @unique
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  
+  // Relations
+  verificationSessions   VerificationSession[]
+  assignedTickets        Ticket[]              @relation("AssignedTickets")
+  auditLogs              AuditLog[]
+  
+  @@map("users")
+}
+
+model VerificationSession {
+  id                     String                @id @default(uuid())
+  ticketId               String                @unique
+  employeeName           String
+  employeeEmail          String
+  requestedBy            String
+  status                 VerificationStatus    @default(pending)
+  scheduledAt            DateTime?
+  completedAt            DateTime?
+  videoMeetingLink       String?
+  videoMeetingPlatform   VideoMeetingPlatform?
+  notes                  String?
+  
+  // Verification details (stored as JSON for flexibility)
+  idType                 IDType?
+  idVerified             Boolean?
+  faceMatchVerified      Boolean?
+  nameMatchVerified      Boolean?
+  verificationNotes      String?
+  
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  
+  // Relations
+  requestedByUser        User                  @relation(fields: [requestedBy], references: [id])
+  ticket                 Ticket?
+  
+  @@map("verification_sessions")
+}
+
+model Ticket {
+  id                     String                @id @default(uuid())
+  title                  String
+  description            String
+  status                 TicketStatus          @default(open)
+  priority               TicketPriority        @default(medium)
+  assignedTo             String?
+  verificationSessionId  String?               @unique
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  
+  // Relations
+  assignedToUser         User?                 @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  verificationSession    VerificationSession?  @relation(fields: [verificationSessionId], references: [id])
+  
+  @@map("tickets")
+}
+
+model AuditLog {
+  id                     String                @id @default(uuid())
+  userId                 String
+  action                 AuditActionType
+  resourceType           String
+  resourceId             String
+  details                Json                  @default("{}")
+  ipAddress              String?
+  userAgent              String?
+  createdAt              DateTime              @default(now())
+  
+  // Relations
+  user                   User                  @relation(fields: [userId], references: [id])
+  
+  @@map("audit_logs")
+}

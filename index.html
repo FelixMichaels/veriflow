@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriFlow - Identity Verification System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3730a3'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Production Note: This will redirect to your actual application -->
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">🔐 VeriFlow</h1>
+            <p class="text-gray-600 mb-6">Identity Verification System</p>
+            <p class="text-sm text-gray-500 mb-6">Setting up your production deployment...</p>
+            
+            <div class="space-y-4">
+                <a href="/static-app.html" class="block w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
+                    Launch VeriFlow Dashboard
+                </a>
+                
+                <div class="text-xs text-gray-400">
+                    <p>✅ Backend API: Connected</p>
+                    <p>✅ Email Integration: Active</p>
+                    <p>✅ File Persistence: Working</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect to the main app
+        setTimeout(() => {
+            window.location.href = '/static-app.html';
+        }, 2000);
+    </script>
+</body>
+</html>

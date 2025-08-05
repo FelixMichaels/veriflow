@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+    <div id="app">
+        <div id="loading" class="text-center py-4">
+            <div class="animate-pulse">Loading VeriFlow...</div>
+        </div>
+        
+        <div id="no-verification" class="hidden">
+            <div class="text-center py-4">
+                <h3 class="text-lg font-medium mb-2">🔐 Identity Verification</h3>
+                <p class="text-gray-600 mb-4">No verification session found for this ticket.</p>
+                <button id="create-session" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Create Verification Session
+                </button>
+            </div>
+        </div>
+        
+        <div id="verification-panel" class="hidden">
+            <div class="border-b pb-3 mb-3">
+                <h3 class="text-lg font-medium flex items-center">
+                    🔐 VeriFlow Session
+                    <span id="session-status" class="ml-2 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Pending</span>
+                </h3>
+                <p class="text-sm text-gray-600">Session ID: <span id="session-id"></span></p>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Employee:</label>
+                    <p id="employee-name" class="text-sm"></p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Meeting:</label>
+                    <p id="meeting-info" class="text-sm text-gray-600">Not scheduled</p>
+                    <button id="schedule-meeting" class="mt-1 text-xs text-blue-600 hover:underline">Schedule Meeting</button>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-700 block mb-2">Verification Checklist:</label>
+                    <div id="checklist" class="space-y-1 text-sm">
+                        <!-- Checklist items will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="pt-3 border-t">
+                    <button id="open-veriflow" class="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
+                        Open in VeriFlow
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://assets.zendesk.com/apps/sdk/2.0/zaf_sdk.js"></script>
+    <script>
+        var client = ZAFClient.init();
+        
+        client.invoke('resize', { width: '100%', height: '400px' });
+        
+        client.get('ticket').then(function(data) {
+            const ticketId = data.ticket.id;
+            const requesterEmail = data.ticket.requester.email;
+            
+            // Check if verification session exists
+            checkVerificationSession(ticketId);
+        });
+        
+        async function checkVerificationSession(ticketId) {
+            try {
+                const response = await fetch(`{{setting.veriflow_api_url}}/api/zendesk/session/${ticketId}`);
+                const data = await response.json();
+                
+                document.getElementById('loading').classList.add('hidden');
+                
+                if (data.session) {
+                    showVerificationPanel(data.session);
+                } else {
+                    document.getElementById('no-verification').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('no-verification').classList.remove('hidden');
+            }
+        }
+        
+        function showVerificationPanel(session) {
+            document.getElementById('verification-panel').classList.remove('hidden');
+            document.getElementById('session-id').textContent = session.id;
+            document.getElementById('employee-name').textContent = session.employeeName;
+            
+            // Update status
+            const statusEl = document.getElementById('session-status');
+            statusEl.textContent = session.status;
+            statusEl.className = `ml-2 px-2 py-1 text-xs rounded ${getStatusClasses(session.status)}`;
+            
+            // Update meeting info
+            if (session.meetingDate) {
+                document.getElementById('meeting-info').textContent = 
+                    `${session.meetingDate} at ${session.meetingTime} (${session.meetingPlatform})`;
+            }
+            
+            // Update checklist
+            updateChecklist(session.verificationChecklist);
+        }
+        
+        function updateChecklist(checklist) {
+            const checklistEl = document.getElementById('checklist');
+            const items = [
+                { key: 'photoIdPresented', label: '📱 Photo ID presented' },
+                { key: 'nameMatches', label: '👤 Name matches directory' },
+                { key: 'faceMatches', label: '😊 Face matches photo' },
+                { key: 'documentAuthentic', label: '✅ Document authentic' },
+                { key: 'notesRecorded', label: '📝 Notes recorded' }
+            ];
+            
+            checklistEl.innerHTML = items.map(item => {
+                const checked = checklist && checklist[item.key];
+                const icon = checked ? '✅' : '⭕';
+                return `<div class="${checked ? 'text-green-600' : 'text-gray-400'}">${icon} ${item.label}</div>`;
+            }).join('');
+        }
+        
+        function getStatusClasses(status) {
+            const classes = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'in-progress': 'bg-blue-100 text-blue-800',
+                'completed': 'bg-green-100 text-green-800',
+                'failed': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+        
+        // Event listeners
+        document.getElementById('create-session').addEventListener('click', async function() {
+            const ticket = await client.get('ticket');
+            const response = await fetch(`{{setting.veriflow_api_url}}/api/zendesk/create-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ticketId: ticket.ticket.id,
+                    requesterEmail: ticket.ticket.requester.email,
+                    requesterName: ticket.ticket.requester.name,
+                    subject: ticket.ticket.subject
+                })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            }
+        });
+        
+        document.getElementById('open-veriflow').addEventListener('click', function() {
+            const sessionId = document.getElementById('session-id').textContent;
+            window.open(`{{setting.veriflow_api_url}}/session/${sessionId}`, '_blank');
+        });
+    </script>
+</body>
+</html>
