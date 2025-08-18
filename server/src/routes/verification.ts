@@ -194,13 +194,28 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
 // Schedule meeting for session
 router.post('/:id/schedule-meeting', asyncHandler(async (req, res) => {
-  const { platform, date, time } = req.body;
+  const { platform, type = 'scheduled', date, time } = req.body;
   
   const sessionIndex = mockSessions.findIndex(s => s.id === req.params.id);
   if (sessionIndex === -1) {
     return res.status(404).json({
       success: false,
       error: { error: 'NotFound', message: 'Session not found' },
+    });
+  }
+
+  // Validate required fields based on meeting type
+  if (!platform) {
+    return res.status(400).json({
+      success: false,
+      error: { error: 'MissingPlatform', message: 'Meeting platform is required' },
+    });
+  }
+
+  if (type === 'scheduled' && (!date || !time)) {
+    return res.status(400).json({
+      success: false,
+      error: { error: 'MissingDateTime', message: 'Date and time are required for scheduled meetings' },
     });
   }
 
@@ -228,15 +243,31 @@ router.post('/:id/schedule-meeting', asyncHandler(async (req, res) => {
       });
   }
 
+  // Set meeting status and scheduled time
+  let meetingStatus = type === 'instant' ? 'active' : 'scheduled';
+  let scheduledAt = null;
+  
+  if (type === 'scheduled' && date && time) {
+    // Combine date and time into ISO string
+    scheduledAt = new Date(`${date}T${time}`).toISOString();
+  } else if (type === 'instant') {
+    // For instant meetings, set scheduled time to now
+    scheduledAt = new Date().toISOString();
+  }
+
   const updatedSession = {
     ...mockSessions[sessionIndex],
     meetingPlatform: platform,
-    meetingDate: date,
-    meetingTime: time,
-    meetingStatus: 'scheduled',
+    meetingType: type,
+    meetingDate: date || null,
+    meetingTime: time || null,
+    meetingStatus: meetingStatus,
     meetingId: meetingId,
     videoCallLink: meetingLink,
-    meetingAgenda: `Identity Verification Session for ${mockSessions[sessionIndex].employeeName}...`,
+    videoMeetingLink: meetingLink, // Add both field names for compatibility
+    videoMeetingPlatform: platform,
+    scheduledAt: scheduledAt,
+    meetingAgenda: `Identity Verification Session for ${mockSessions[sessionIndex].employeeName}`,
     updatedAt: new Date().toISOString()
   };
 
@@ -259,11 +290,15 @@ router.delete('/:id/meeting', asyncHandler(async (req, res) => {
   const updatedSession = {
     ...mockSessions[sessionIndex],
     meetingPlatform: '',
+    meetingType: '',
     meetingDate: '',
     meetingTime: '',
     meetingStatus: 'not_scheduled',
     meetingId: '',
     videoCallLink: '',
+    videoMeetingLink: '', // Clear both field names
+    videoMeetingPlatform: '',
+    scheduledAt: null,
     meetingAgenda: '',
     updatedAt: new Date().toISOString()
   };
