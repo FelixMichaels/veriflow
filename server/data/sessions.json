@@ -1,0 +1,371 @@
+[
+  {
+    "id": "1",
+    "employeeName": "John Doe",
+    "employeeEmail": "john.doe@company.com",
+    "status": "completed",
+    "idType": "",
+    "idNumber": "",
+    "notes": "",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-08-05T03:02:31.130Z",
+    "updatedAt": "2025-08-18T00:27:21.403Z",
+    "requestedByUser": {
+      "name": "Admin User"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "Password Reset Request",
+      "priority": "medium"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": false,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": false
+    },
+    "completedAt": "2025-08-18T00:06:14.131Z",
+    "meetingType": "",
+    "videoMeetingLink": "",
+    "videoMeetingPlatform": "",
+    "scheduledAt": null
+  },
+  {
+    "id": "2",
+    "employeeName": "Sarah Johnson",
+    "employeeEmail": "sarah.johnson@company.com",
+    "status": "in_progress",
+    "idType": "drivers_license",
+    "idNumber": "",
+    "notes": "done",
+    "videoCallLink": "https://meet.google.com/2z6spbltay4",
+    "meetingPlatform": "meet",
+    "meetingDate": null,
+    "meetingTime": null,
+    "meetingStatus": "active",
+    "meetingId": "2z6spbltay4",
+    "meetingAgenda": "Identity Verification Session for Sarah Johnson",
+    "createdAt": "2025-08-04T03:02:31.139Z",
+    "updatedAt": "2025-08-18T00:53:26.015Z",
+    "requestedByUser": {
+      "name": "IT Support"
+    },
+    "assignedToId": "2",
+    "assignedToUser": {
+      "id": "2",
+      "name": "Sarah Johnson",
+      "email": "sarah@company.com",
+      "role": "operator"
+    },
+    "ticket": {
+      "title": "MFA Reset Request",
+      "priority": "high"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": true,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": true
+    },
+    "meetingType": "instant",
+    "videoMeetingLink": "https://meet.google.com/2z6spbltay4",
+    "videoMeetingPlatform": "meet",
+    "scheduledAt": "2025-08-18T00:53:07.665Z"
+  },
+  {
+    "id": "3",
+    "employeeName": "Alex Chen",
+    "employeeEmail": "alex.chen@company.com",
+    "status": "completed",
+    "idType": "passport",
+    "idNumber": "",
+    "notes": "Verification completed successfully. All checks passed.",
+    "videoCallLink": "https://zoom.us/j/123456789",
+    "meetingPlatform": "zoom",
+    "meetingDate": "2025-08-03",
+    "meetingTime": "14:00",
+    "meetingStatus": "completed",
+    "meetingId": "123456789",
+    "meetingAgenda": "Identity Verification Session for Alex Chen...",
+    "createdAt": "2025-08-03T03:02:31.139Z",
+    "updatedAt": "2025-08-04T03:02:31.139Z",
+    "requestedByUser": {
+      "name": "HR Department"
+    },
+    "assignedToId": "3",
+    "assignedToUser": {
+      "id": "3",
+      "name": "Alex Chen",
+      "email": "alex@company.com",
+      "role": "operator"
+    },
+    "ticket": {
+      "title": "Account Recovery Request",
+      "priority": "low"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": true,
+      "nameMatches": true,
+      "faceMatches": true,
+      "documentAuthentic": true,
+      "notesRecorded": true
+    }
+  },
+  {
+    "id": "4",
+    "employeeName": "Emma Davis",
+    "employeeEmail": "emma.davis@company.com",
+    "status": "rejected",
+    "idType": "drivers_license",
+    "idNumber": "",
+    "notes": "ID verification failed. Document appears to be tampered.",
+    "videoCallLink": "https://teams.microsoft.com/l/meetup-join/xyz",
+    "meetingPlatform": "teams",
+    "meetingDate": "2025-08-04",
+    "meetingTime": "16:45",
+    "meetingStatus": "completed",
+    "meetingId": "teams-xyz-123",
+    "meetingAgenda": "Identity Verification Session for Emma Davis...",
+    "createdAt": "2025-08-02T03:02:31.139Z",
+    "updatedAt": "2025-08-03T03:02:31.139Z",
+    "requestedByUser": {
+      "name": "Security Team"
+    },
+    "assignedToId": "4",
+    "assignedToUser": {
+      "id": "4",
+      "name": "Emma Davis",
+      "email": "emma@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "Emergency Access Request",
+      "priority": "high"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": true,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": true
+    }
+  },
+  {
+    "id": "5",
+    "employeeName": "Mike Wilson",
+    "employeeEmail": "mike.wilson@company.com",
+    "status": "escalated",
+    "idType": "passport",
+    "idNumber": "",
+    "notes": "Complex case requiring additional verification. Escalated to security team.",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-07-31T03:02:31.139Z",
+    "updatedAt": "2025-08-02T03:02:31.139Z",
+    "requestedByUser": {
+      "name": "Compliance Team"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "Privileged Access Request",
+      "priority": "high"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": true,
+      "nameMatches": true,
+      "faceMatches": true,
+      "documentAuthentic": true,
+      "notesRecorded": false
+    }
+  },
+  {
+    "id": "6",
+    "employeeName": "Alex Martinez",
+    "employeeEmail": "alex.martinez@livetest.com",
+    "status": "pending",
+    "idType": "",
+    "idNumber": "",
+    "notes": "📧 Created from email: URGENT: Account locked - need immediate help",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-08-05T03:03:33.895Z",
+    "updatedAt": "2025-08-05T03:03:33.895Z",
+    "requestedByUser": {
+      "name": "📧 livetest"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "URGENT: Account locked - need immediate help",
+      "priority": "high",
+      "source": "email",
+      "tenantId": "livetest"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": false,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": false
+    }
+  },
+  {
+    "id": "7",
+    "employeeName": "Test User",
+    "employeeEmail": "test.user@quicktest.com",
+    "status": "pending",
+    "idType": "",
+    "idNumber": "",
+    "notes": "📧 Created from email: Quick test - Password reset needed",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-08-05T03:21:04.896Z",
+    "updatedAt": "2025-08-05T03:21:04.896Z",
+    "requestedByUser": {
+      "name": "📧 quicktest"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "Quick test - Password reset needed",
+      "priority": "low",
+      "source": "email",
+      "tenantId": "quicktest"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": false,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": false
+    }
+  },
+  {
+    "id": "8",
+    "employeeName": "Final Test",
+    "employeeEmail": "final.test@persistence.com",
+    "status": "pending",
+    "idType": "",
+    "idNumber": "",
+    "notes": "📧 Created from email: 🔥 FINAL TEST - Password Reset Needed",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-08-05T03:21:35.237Z",
+    "updatedAt": "2025-08-05T03:21:35.237Z",
+    "requestedByUser": {
+      "name": "📧 persistence-test"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "🔥 FINAL TEST - Password Reset Needed",
+      "priority": "medium",
+      "source": "email",
+      "tenantId": "persistence-test"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": false,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": false
+    }
+  },
+  {
+    "id": "9",
+    "employeeName": "Tese",
+    "employeeEmail": "test@test.com",
+    "ticketTitle": "hoi",
+    "ticketDescription": "ff",
+    "priority": "medium",
+    "status": "pending",
+    "idType": "",
+    "idNumber": "",
+    "notes": "",
+    "videoCallLink": "",
+    "meetingPlatform": "",
+    "meetingDate": "",
+    "meetingTime": "",
+    "meetingStatus": "not_scheduled",
+    "meetingId": "",
+    "meetingAgenda": "",
+    "createdAt": "2025-08-18T00:28:11.758Z",
+    "updatedAt": "2025-08-18T00:28:11.758Z",
+    "requestedByUser": {
+      "name": "Admin User"
+    },
+    "assignedToId": "1",
+    "assignedToUser": {
+      "id": "1",
+      "name": "Michael Rodriguez",
+      "email": "michael@company.com",
+      "role": "admin"
+    },
+    "ticket": {
+      "title": "hoi",
+      "priority": "medium"
+    },
+    "verificationChecklist": {
+      "photoIdPresented": false,
+      "nameMatches": false,
+      "faceMatches": false,
+      "documentAuthentic": false,
+      "notesRecorded": false
+    }
+  }
+]

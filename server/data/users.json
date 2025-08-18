@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "name": "Michael Rodriguez",
+    "email": "michael@company.com",
+    "role": "admin"
+  },
+  {
+    "id": "2",
+    "name": "Sarah Johnson",
+    "email": "sarah@company.com",
+    "role": "operator"
+  },
+  {
+    "id": "3",
+    "name": "Alex Chen",
+    "email": "alex@company.com",
+    "role": "operator"
+  },
+  {
+    "id": "4",
+    "name": "Emma Davis",
+    "email": "emma@company.com",
+    "role": "admin"
+  }
+]
